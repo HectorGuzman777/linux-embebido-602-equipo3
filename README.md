@@ -1,1 +1,1 @@
-# linux-embebido-602-equipo33
+# linux-embebido-602-equipo3
