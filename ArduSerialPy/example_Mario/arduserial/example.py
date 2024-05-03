@@ -21,6 +21,9 @@ for i in range(1,4):
     received = ser.readline()
     print("Received: ", received)
 
+
+
+
 # Llama a la función find_ports para obtener la lista de puertos seriales disponibles
 available_ports = find_ports()
 
@@ -28,5 +31,6 @@ available_ports = find_ports()
 print("Puertos seriales disponibles:")
 for port in available_ports:
     print(port)
+
 
 ser.close() #siempre que trabajemos con serial ponerlo
