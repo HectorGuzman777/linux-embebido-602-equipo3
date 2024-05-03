@@ -4,7 +4,9 @@
 import time 
 import serial
 #local libraries or maodules
-import locate_ports.py
+#mandamos a llamar la funcion del archivo desde de find ports 
+#para poder subirla
+from locate_ports import find_ports
 
 ser = serial.Serial(port='/dev/tty', baudrate=115200)
 
