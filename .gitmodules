@@ -1,0 +1,3 @@
+[submodule "Scoket/SOCKET"]
+	path = Scoket/SOCKET
+	url = https://github.com/PedroFerrusca/socket_app.git
