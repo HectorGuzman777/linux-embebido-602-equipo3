@@ -1,3 +1,4 @@
+
 from tkinter import BOTH
 from tkinter import Button
 from tkinter import Frame
@@ -15,11 +16,13 @@ from serial_sensor import SerialSensor
 
 class App(Frame):
 
-    def __init__(self, parent, *args, **kwargs):       
-        Frame.__init__(self, parent, *args, **kwargs)
+    def _init_(self, parent, *args, **kwargs):       
+        Frame._init_(self, parent, *args, **kwargs)
         self.parent:Tk = parent
+
         # Esta variable puede ser del tipo sensor o nada
         self.serial_device: SerialSensor | None = None
+
         # Aqui vamos a crear todos los componentes graficos
         self.serial_devices_combobox: Combobox = self._init_serial_devices_combobox()
         self.refresh_serial_devices_button: Button = self._create_refresh_serial_devices_button()
@@ -32,20 +35,21 @@ class App(Frame):
 
     def init_gui(self,)-> None:
 
-        self.parent.title('Temperatura del SENSOR XD')
-        self.parent.geometry('500x600') #X*Y
+        self.parent.title('CASA INTELIGENTE')
+        self.parent.geometry('1000x600') #X*Y
         
         # Crear un Canvas para la imagen de fondo
-        self.canvas = Canvas(self.parent, width=500, height=170)
-        self.canvas.pack(expand=True, fill=BOTH)
+        #self.canvas = Canvas(self.parent, width=1000, height=600)
+        #self.canvas.pack(expand=True, fill=BOTH)
 
         # Cargar y mostrar la imagen de fondo
-        self.bg_image = PhotoImage(file="miles_alreves_xd.png", width=500, height=200)  # Guardar referencia a la imagen
+        self.bg_image = PhotoImage(file="CASAINTELIGENTE.png", width=1000, height=600)  # Guardar referencia a la imagen
         self.canvas.create_image(0, 0, anchor='nw', image=self.bg_image) # (x,y)
         
-        self['bg'] = '#020c2b'
+        self['bg'] = 'red'
         self.pack(expand=True, fill=BOTH)
-        
+
+        """
         # Crear un Canvas para la imagen de fondo
         self.canvas2 = Canvas(self.parent, width=500, height=170)
         self.canvas2.pack(expand=True, fill=BOTH)
@@ -53,7 +57,8 @@ class App(Frame):
         # Cargar y mostrar la imagen de fondo
         self.bg_image2 = PhotoImage(file="miles.png", width=500, height=200)  # Guardar referencia a la imagen
         self.canvas2.create_image(0, 0, anchor='nw', image=self.bg_image2)
-
+         
+        """
         #aqui vamos a colocar los elementos graficos
         #row 0
         self.serial_devices_combobox.grid(row=1, column=0, padx=20, pady=30)
@@ -62,7 +67,7 @@ class App(Frame):
         self.connet_button.grid(row = 2, column = 1)
         #row 1
         self.temperature_label.grid(row = 3, column = 0, pady=30)
-        self.read_temperature_button.grid(row = 3, column =1, pady=30)
+        self.read_temperature_button.grid(row = 3, column = 1, pady=30)
         self.creators_names_label.grid(row=4, column=0 )
         #other settings
         self.baudrate_combobox.current(0) # No esta seleccionado
@@ -160,7 +165,7 @@ class App(Frame):
 
 root = Tk()
 
-if __name__ == '__main__':
+if _name_ == '_main_':
     ex = App(root)
     
     root.mainloop()
