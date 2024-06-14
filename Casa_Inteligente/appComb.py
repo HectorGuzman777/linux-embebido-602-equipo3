@@ -4,16 +4,10 @@ import tkinter as tk
 from tkinter.ttk import Combobox
 from PIL import Image, ImageTk
 import serial
-import subprocess
-import socket
-import threading
 import serial.tools.list_ports
 
 BAUDRATES = [9600, 19200, 38400, 57600, 115200]
 
-numero_de_led = 0
-
-# ######################################################################## #
 class SerialSensor:
     def __init__(self, port, baudrate):
         self.ser = serial.Serial(port, baudrate, timeout=1)
@@ -22,11 +16,11 @@ class SerialSensor:
         self.ser.write(command.encode())
         return self.ser.readline().decode()
 
-# ######################################################################## #
 class App:
     def __init__(self, parent):
         self.parent = parent
         self.serial_device = None
+        self.led_states = [False] * 6  # Inicializar el estado de los LEDs
         self.init_gui()
 
     def init_gui(self):
@@ -73,20 +67,16 @@ class App:
         self.refresh_serial_devices_button = self._create_refresh_serial_devices_button()
         self.baudrate_combobox = self._create_baudrate_combobox()
         self.connect_button = self._create_connect_button()
-        self.comboboxs = self.comboboxs()   # Llamar al método combobox_leds
-        self.on_off_buttons = self.on_off_buttons()
+        self.comboboxs()   # Llamar al método combobox_leds
+        self.on_off_buttons()
         self.buzzer_button = self._create_buzzer_button()
         self.labels_xd()
 
         self.serial_devices_combobox.place(x=50, y=20)
-        self.refresh_serial_devices_button.place(x=275, y=20)
+        self.refresh_serial_devices_button.place(x=250, y=20)
         self.baudrate_combobox.place(x=450, y=20)
         self.connect_button.place(x=650, y=20)
         self.buzzer_button.place(x=800, y=20)
-        # las coordenadas de on_off_buttions estan declarados de la misma funcion
-        # lo mismo con labelxd
-
-        
 
     def _init_serial_devices_combobox(self):
         ports = self.find_available_serial_ports()
@@ -111,33 +101,15 @@ class App:
                 messagebox.showerror('Port not selected', 'Select a valid port')
                 return
             self.serial_device = SerialSensor(port=port, baudrate=baudrate)
+            messagebox.showinfo('Connection Successful', 'Serial device connected successfully')
         except ValueError:
             messagebox.showerror('Wrong baudrate', 'Baudrate not valid')
             return
 
     def _create_connect_button(self):
         return Button(self.frame, text='Connect', command=self.connect_serial_device)
-    
-    """
-    def create_led_control_buttons(self):
-        colors = ['R', 'G', 'B', 'Y', 'C', 'M', 'W']
-        for led_number in range(1, 6):
-            for idx, color in enumerate(colors):
-                button = Button(self.frame, text=f"LED {led_number} - {color}",
-                                command=lambda num=led_number, col=color: self.send_command(num, col))
-                button.place(x=50 + (idx * 100), y=100 + (led_number * 50))
-    """
-
-    def send_command(self, led_number, color):
-        if self.serial_device is None:
-            messagebox.showerror('Serial connection error', 'Serial device not initialized')
-            return
-        command = f"{led_number}{color}\n"
-        self.serial_device.send(command)
-        print(f"Enviando comando: {command.strip()}")
 
     def comboboxs(self):
-        
         # COMBOBOX LEDS
         leds_list = ['Led #1', 'Led #2', 'Led #3', 'Led #4', 'Led #5']
         self.led_var = tk.StringVar()
@@ -151,8 +123,6 @@ class App:
         self.color_box = Combobox(self.frame, textvariable=self.color_var, values=color_list)
         self.color_box.place(x=450, y=70)
         self.color_box.bind('<<ComboboxSelected>>', self.on_color_selected)
-
-
 
     def on_led_selected(self, event):
         selected_led = self.led_var.get()
@@ -189,58 +159,50 @@ class App:
         }
 
         if selected_led in led_button_map:
-            led_button_map[selected_led].config(text = "ON", fg=color_map[selected_color])
-    
+            led_button_map[selected_led].config(text="ON", fg=color_map[selected_color])
 
     def on_off_buttons(self):
-        leds_list = ['Led #1', 'Led #2', 'Led #3', 'Led #4', 'Led #5']
-        color_list = ['Rojo', 'Azul', 'Amarillo', 'Morado', 'Verde', 'Blanco', 'Cian']
-        self.button1 = tk.Button(self.frame, text="Led #1", 
-                                             font=("Times New Roman", 20, "bold"), 
-                                             bg="white", fg="black", 
-                                             width=10, height=2, 
-                                             relief="raised", 
-                                             borderwidth=3, 
-                                             command=lambda: self.send_command(leds_list, color_list))
+        self.button1 = tk.Button(self.frame, text="Led #1",
+                                 font=("Times New Roman", 20, "bold"),
+                                 bg="white", fg="black",
+                                 width=10, height=2,
+                                 relief="raised",
+                                 borderwidth=3,
+                                 command=lambda: self.toggle_led(1))
         self.button1.place(x=480, y=170)
 
-
-        self.button2 = tk.Button(self.frame, text="Led #2", 
-                                             font=("Times New Roman", 20, "bold"), 
-                                             bg="white", fg="black", 
-                                             width=10, height=2, 
-                                             relief="raised", 
-                                             borderwidth=3, 
-                                             command=lambda: self.toggle_led(2))
+        self.button2 = tk.Button(self.frame, text="Led #2",
+                                 font=("Times New Roman", 20, "bold"),
+                                 bg="white", fg="black",
+                                 width=10, height=2,
+                                 relief="raised",
+                                 borderwidth=3,
+                                 command=lambda: self.toggle_led(2))
         self.button2.place(x=250, y=300)
-    
 
-        self.button3 = tk.Button(self.frame, text="Led #3", 
-                                             font=("Times New Roman", 20, "bold"), 
-                                             bg="white", fg="black", 
-                                             width=10, height=2, relief="raised", 
-                                             borderwidth=3, 
-                                             command=lambda: self.toggle_led(3))
+        self.button3 = tk.Button(self.frame, text="Led #3",
+                                 font=("Times New Roman", 20, "bold"),
+                                 bg="white", fg="black",
+                                 width=10, height=2, relief="raised",
+                                 borderwidth=3,
+                                 command=lambda: self.toggle_led(3))
         self.button3.place(x=720, y=300)
 
-
-        self.button4 = tk.Button(self.frame, text="Led #4", 
-                                             font=("Times New Roman", 20, "bold"), 
-                                             bg="white", fg="black", 
-                                             width=10, height=2, relief="raised", 
-                                             borderwidth=3, 
-                                             command=lambda: self.toggle_led(4))
+        self.button4 = tk.Button(self.frame, text="Led #4",
+                                 font=("Times New Roman", 20, "bold"),
+                                 bg="white", fg="black",
+                                 width=10, height=2, relief="raised",
+                                 borderwidth=3,
+                                 command=lambda: self.toggle_led(4))
         self.button4.place(x=220, y=550)
 
-
-        self.button5 = tk.Button(self.frame, text="Led #5", 
-                                             font=("Times New Roman", 20, "bold"), 
-                                             bg="white", fg="black", 
-                                             width=10, height=2, relief="raised", 
-                                             borderwidth=3, 
-                                             command=lambda: self.toggle_led(5))
+        self.button5 = tk.Button(self.frame, text="Led #5",
+                                 font=("Times New Roman", 20, "bold"),
+                                 bg="white", fg="black",
+                                 width=10, height=2, relief="raised",
+                                 borderwidth=3,
+                                 command=lambda: self.toggle_led(5))
         self.button5.place(x=750, y=550)
-
 
     def toggle_led(self, led_number):
         self.led_states[led_number] = not self.led_states[led_number]
@@ -248,63 +210,44 @@ class App:
         if self.led_states[led_number]:
             selected_color = self.color_var.get().lower()
             color_map = {
-                'rojo'  : 'red',
-                'azul'  : 'blue',
-                'amarillo'  : 'yellow',
-                'verde' : 'green',
-                'cian'  : 'cyan',
+                'rojo': 'red',
+                'azul': 'blue',
+                'amarillo': 'yellow',
+                'verde': 'green',
+                'cian': 'cyan',
                 'morado': 'purple',
                 'blanco': 'white',
             }
-            button.config(bg=color_map.get(selected_color, 'white'), fg='black')
-    
-
-    def labels_xd(self):
-        num_leds_label = Label (
-            master = self.frame,
-            text = 'Numero de leds',
-            background='white',
-            foreground = 'black',
-            font=("Times New Roman", 13), 
-        )
-        num_leds_label.place(x=240, y=70)
-
-        color_leds_label = Label (
-            master = self.frame,
-            text = 'Colores a elegir',
-            background='white',
-            foreground = 'black',
-            font=("Times New Roman", 13), 
-        )   
-        color_leds_label.place(x=650, y=70)
+            button.config(bg=color_map.get(selected_color, 'white'), text="ON")
+        else:
+            button.config(bg="white", text=f"Led #{led_number}")
         
-    def send_buzzer_command(self):
-        if self.serial_device is None:
-            messagebox.showerror('Serial connection error', 'Serial device not initialized')
-            return
-        command = 'T\n'  # Comando para activar el buzzer
-        self.serial_device.send(command)
-        print(f"Enviando comando al buzzer: {command.strip()}")
-
+        if self.serial_device:
+            command = f"{led_number}{'ON' if self.led_states[led_number] else 'OFF'}"
+            self.serial_device.send(command)
 
     def _create_buzzer_button(self):
-        return Button(self.frame, text='Activate Buzzer', command=self.send_buzzer_command)
-    
+        return Button(self.frame, text='Play Sound', command=self.play_sound)
+
+    def play_sound(self):
+        # Lógica para enviar el comando del zumbador
+        if self.serial_device:
+            command = "BUZZER"
+            self.serial_device.send(command)
+
+    def labels_xd(self):
+        # Título
+        self.title = Label(self.frame, text="CASA INTELIGENTE",
+                           font=("Times New Roman", 24, "bold"),
+                           bg="black", fg="white")
+        self.title.place(x=400, y=100)
 
     @staticmethod
     def find_available_serial_ports():
-        ports = serial.tools.list_ports.comports()
-        return [port.device for port in ports]
-    
-# ######################################################################## #
+        return [port.device for port in serial.tools.list_ports.comports()]
+
 
 if __name__ == '__main__':
-
-        # Inicializar el servidor primero
-    server = HouseServer(host='0.0.0.0', port=3333)
-    server_thread = threading.Thread(target=server.start)
-    server_thread.start()
-
     root = Tk()
     app = App(root)
     root.mainloop()

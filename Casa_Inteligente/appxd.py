@@ -4,6 +4,18 @@ from tkinter.ttk import Combobox
 from PIL import Image, ImageTk
 import serial
 import serial.tools.list_ports
+import requests
+import socket
+
+HEADER = 64
+PORT = 5050
+SERVER = socket.gethostbyname(socket.gethostname())
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "!DISCONNECT"
+ADDR = (SERVER, PORT)
+
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(ADDR)
 
 BAUDRATES = [9600, 19200, 38400, 57600, 115200]
 
@@ -68,7 +80,7 @@ class App:
         self.buzzer_button = self._create_buzzer_button()
         
         self.serial_devices_combobox.place(x=50, y=20)
-        self.refresh_serial_devices_button.place(x=250, y=20)
+        self.refresh_serial_devices_button.place(x=270, y=20)
         self.baudrate_combobox.place(x=450, y=20)
         self.connect_button.place(x=650, y=20)
         self.buzzer_button.place(x=800, y=20)
@@ -123,21 +135,51 @@ class App:
             return
         command = f"{led_number}{color}\n"
         self.serial_device.send(command)
+        self.send_socket_command(command)
         print(f"Enviando comando: {command.strip()}")
+
+    def send_socket_command(self, command):
+        message = command.encode(FORMAT)
+        msg_length = len(message)
+        send_length = str(msg_length).encode(FORMAT)
+        send_length += b' ' * (HEADER - len(send_length))
+        client.send(send_length)
+        client.send(message)
 
     def send_buzzer_command(self):
         if self.serial_device is None:
             messagebox.showerror('Serial connection error', 'Serial device not initialized')
             return
-        command = 'T\n'  # Comando para activar el buzzer
-        response = self.serial_device.send(command)
-        print(f"Enviando comando al buzzer: {command.strip()}")
-        print(f"Respuesta: {response.strip()}")
 
-    @staticmethod
-    def find_available_serial_ports():
+        # Verificar si se ha detectado una tarjeta válida
+        rfid_data = self.read_rfid_code()
+        if rfid_data:
+            print(f"Valid RFID card detected: {rfid_data}")
+            # Llamar al servidor para activar el buzzer solo si se detecta una tarjeta válida
+            try:
+                response = requests.get('http://localhost:8082/activate_buzzer')
+                if response.status_code == 200:
+                    messagebox.showinfo('Buzzer Activated', 'Buzzer activated successfully')
+                    print("Buzzer activated successfully")
+                    self.send_socket_command("Activate Buzzer")
+                else:
+                    messagebox.showerror('Server Error', 'Failed to activate the buzzer')
+                    print(f"Failed to activate buzzer. Server returned status code: {response.status_code}")
+            except Exception as e:
+                messagebox.showerror('Server Connection Error', f'Error connecting to server: {e}')
+                print(f"Error connecting to server: {e}")
+        else:
+            messagebox.showerror('RFID Error', 'No valid RFID card detected')
+            print("No valid RFID card detected")
+
+    def find_available_serial_ports(self):
         ports = serial.tools.list_ports.comports()
         return [port.device for port in ports]
+
+    def read_rfid_code(self):
+        # Simulación de lectura de un código RFID
+        return "123456789"
+
 
 if __name__ == '__main__':
     root = tk.Tk()
