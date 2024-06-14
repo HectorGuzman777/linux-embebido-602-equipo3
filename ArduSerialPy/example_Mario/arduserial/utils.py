@@ -27,6 +27,7 @@ def find_available_serial_ports() -> list[str]:
             continue
 
     return result
+<<<<<<< HEAD
 import glob
 import serial#libreria pyserial
 
@@ -55,3 +56,5 @@ def find_available_serial_ports() -> list[str]:
             continue
 
     return result
+=======
+>>>>>>> dev
