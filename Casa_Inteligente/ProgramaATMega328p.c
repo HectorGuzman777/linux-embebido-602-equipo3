@@ -2,7 +2,7 @@
  * Programa_4.c
  *
  * Created: 6/13/2024 8:14:44 PM
- * Author: mario
+ * Author: mario, Hector, Eduardo
  */
 
 
